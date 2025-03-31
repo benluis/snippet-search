@@ -2,9 +2,6 @@
 import os
 import requests
 import json
-import asyncio
-import aiohttp
-from tqdm.asyncio import tqdm
 from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
@@ -17,7 +14,7 @@ pinecone_host = os.getenv("PINECONE_HOST")
 
 pc = Pinecone(api_key=pinecone_api_key)
 index = pc.Index(host=pinecone_host)
-openai_client = OpenAI(api_key=openai_api_key) if openai_api_key else None
+openai_client = OpenAI(api_key=openai_api_key)
 
 def extract_keywords(nl_query):
     try:
@@ -36,31 +33,36 @@ def extract_keywords(nl_query):
         print(f"Error extracting search parameters: {e}")
         return {"keywords": nl_query, "languages": None}
 
+def search_github(query, limit=10):
+    base_url = "https://api.github.com/search/repositories"
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    if github_token:
+        headers["Authorization"] = f"token {github_token}"
 
-async def batch_upsert(records, batch_size=200):
-    batches = [
-        records[i:i + batch_size]
-        for i in range(0, len(records), batch_size)
-    ]
+    params = {
+        "q": query,
+        "sort": "stars",
+        "order": "desc",
+        "per_page": limit
+    }
 
-    async_results = [
-        index.upsert_records(records=batch, namespace="", async_req=True)
-        for batch in batches
-    ]
-
-    [async_result.get() for async_result in async_results]
-
-    return len(records)
-
+    response = requests.get(base_url, headers=headers, params=params)
+    if response.status_code == 200:
+        return response.json().get("items", [])
+    else:
+        print(f"Error fetching GitHub repositories: {response.status_code}")
+        return []
 
 def search_pinecone(query_text, top_k=3):
-    results = index.search(
-        query={
-            "top_k": top_k,
-            "inputs": {
-                "text": query_text
+    try:
+        results = index.search_records(
+            namespace="",
+            query={
+                "inputs": {"text": query_text},
+                "top_k": top_k
             }
-        },
-        namespace=""
-    )
-    return results
+        )
+        return results
+    except Exception as e:
+        print(f"Error searching Pinecone: {e}")
+        return None

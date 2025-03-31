@@ -5,6 +5,7 @@ import json
 from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
+from process_data import chunks
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")

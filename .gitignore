@@ -13,3 +13,4 @@ processData.py
 /dataSources.local.xml
 .idea/
 /__pycache__
+test.py

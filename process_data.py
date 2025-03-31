@@ -49,20 +49,20 @@ def chunks(iterable, batch_size=200):
 
 def parallel_upsert(records, batch_size=200, max_parallel=30):
     try:
-        pc_parallel = Pinecone(api_key=pinecone_api_key, pool_threads=max_parallel)
-        index_parallel = pc_parallel.Index(host=pinecone_host)
+        with Pinecone(api_key=pinecone_api_key, pool_threads=max_parallel) as pc_parallel:
+            index_parallel = pc_parallel.Index(host=pinecone_host)
 
-        async_results = [
-            index_parallel.upsert_records(records=batch, async_req=True)
-            for batch in chunks(records, batch_size=batch_size)
-        ]
+            async_results = [
+                index_parallel.upsert_records(records=batch, async_req=True)
+                for batch in chunks(records, batch_size=batch_size)
+            ]
 
-        total_upserted = 0
-        for async_result in async_results:
-            response = async_result.get()
-            total_upserted += response.upserted_count
+            total_upserted = 0
+            for async_result in async_results:
+                response = async_result.get()
+                total_upserted += response.upserted_count
 
-        return total_upserted
+            return total_upserted
 
     except Exception as e:
         print(f"Error in parallel upsert: {e}")

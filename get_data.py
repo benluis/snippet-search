@@ -5,7 +5,7 @@ import json
 from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
-from process_data import chunks
+from process_data import embed_text
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
@@ -56,12 +56,15 @@ def search_github(query, limit=10):
 
 def search_pinecone(query_text, top_k=3):
     try:
-        results = index.search_records(
-            namespace="",
-            query={
-                "inputs": {"text": query_text},
-                "top_k": top_k
-            }
+        query_vector = embed_text(query_text)
+        if query_vector is None:
+            print("Failed to generate query embedding.")
+            return None
+
+        results = index.query(
+            vector=query_vector,
+            top_k=top_k,
+            namespace=""
         )
         return results
     except Exception as e:

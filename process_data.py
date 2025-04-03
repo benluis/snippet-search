@@ -4,6 +4,7 @@ import itertools
 from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
+import re
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
@@ -16,7 +17,7 @@ index = pc.Index(host=pinecone_host)
 openai_client = OpenAI(api_key=openai_api_key)
 
 def embed_text(text):
-    text = text.replace('\x00', '').replace('\r', ' ').replace('\n', ' ')
+    text = text.replace("\n", " ")
     try:
         response = openai_client.embeddings.create(
             input=text,
@@ -25,7 +26,7 @@ def embed_text(text):
         return response.data[0].embedding
     except Exception as e:
         print(f"Error embedding text: {e}")
-        return None
+        return [0] * 1536
 
 def create_records(data):
     records = []

@@ -18,9 +18,11 @@
             <span class="text-green-500">c</span>
             <span class="text-red-500">h</span>
         </div>
-        <form action="/search" method="get" class="flex w-full max-w-lg mx-auto border rounded-full overflow-hidden hover:shadow-md focus-within:shadow-md">
-                <input type="text" name="q" class="flex py-3 px-4 outline-none" placeholder="Search for code repositories...">
-        </form>
+        <div class="flex-grow">
+            <form action="/search" method="get" class="flex w-full border rounded-full overflow-hidden hover:shadow-md focus-within:shadow-md">
+                <input type="text" name="q" placeholder="Search for code..." class="flex-1 w-full px-4 py-3 outline-none">
+            </form>
+        </div>
     </div>
 </body>
 </html>

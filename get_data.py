@@ -27,7 +27,7 @@ def extract_keywords(nl_query):
                 {"role": "user", "content": nl_query}
             ],
             response_format={"type": "json_object"},
-            max_tokens=600
+            max_tokens=200
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:

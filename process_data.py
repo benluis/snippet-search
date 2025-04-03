@@ -33,7 +33,7 @@ def create_records(data):
     for item in data:
         description = item.get("description") or item.get("full_name") or f"Repository {item['id']}"
 
-        embedding = embed_text(description)
+        embedding = embed_text(description[:200])
 
         if embedding is not None:
             record = {

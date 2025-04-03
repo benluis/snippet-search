@@ -1,6 +1,5 @@
 # main.py
 from flask import Flask, render_template, request, redirect, url_for
-import os
 from dotenv import load_dotenv
 from get_data import extract_keywords, search_github, search_pinecone
 from process_data import create_records, parallel_upsert
@@ -14,6 +13,8 @@ def home():
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('q', '')
+    if not query:
+        return redirect(url_for('home'))
 
     search_params = extract_keywords(query)
 
@@ -22,9 +23,9 @@ def search():
         search_query += f" language:{search_params['languages']}"
 
     github_results = search_github(search_query, limit=10)
-
     records = create_records(github_results)
-    parallel_upsert(records)
+    if records:
+        parallel_upsert(records)
 
     pinecone_results = search_pinecone(query, top_k=5)
 

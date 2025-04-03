@@ -64,7 +64,8 @@ def search_pinecone(query_text, top_k=3):
         results = index.query(
             vector=query_vector,
             top_k=top_k,
-            namespace=""
+            namespace="",
+            include_metadata=True
         )
         return results
     except Exception as e:

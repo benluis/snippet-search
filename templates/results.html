@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ query }} - Code Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans bg-gray-50">
+    <header class="border-b bg-white p-3">
+        <div class="max-w-4xl mx-auto flex items-center">
+            <a href="/" class=" mr-4 font-bold text-2xl">
+                <span class="text-blue-500">C</span>
+                <span class="text-red-500">o</span>
+                <span class="text-yellow-500">d</span>
+                <span class="text-blue-500">e</span>
+                <span class="text-green-500">S</span>
+                <span class="text-red-500">e</span>
+                <span class="text-blue-500">a</span>
+                <span class="text-yellow-500">r</span>
+                <span class="text-green-500">c</span>
+                <span class="text-red-500">h</span>
+            </a>
+            <form action="/search" method="get" class="flex w-full max-w-lg border rounded-full overflow-hidden hover:shadow-md focus-within:shadow-md">
+                <input type="text" name="q" value="{{ query }}" class="px-4 py-2 outline-none">
+            </form>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto p-4">
+            <h2 class="text-lg border-b pb-1 mb-4">Vector Database Results</h2>
+            {% for result in pinecone_results %}
+                <div class="mb-4">
+                    <a href="{{ result.metadata.url }}" class="text-blue-700 hover:underline">{{ result.metadata.full_name }}</a>
+                    <div class="text-sm text-green-700">{{ result.metadata.url }}</div>
+                    <div class="text-sm">{{ result.metadata.description[:500] }}</div>
+                    <div class="text-md">Language: {{ result.metadata.language }} | Stars: {{ result.metadata.stars }}</div>
+                </div>
+            {% endfor %}
+
+        <h2 class="text-lg border-b pb-1 mb-4">GitHub Results</h2>
+            {% for result in github_results %}
+                <div class="mb-4">
+                    <a href="{{ result.html_url }}" class="text-blue-700 hover:underline">{{ result.full_name }}</a>
+                    <div class="text-sm text-green-700">{{ result.html_url }}</div>
+                    <div class="text-sm">{{ result.description[:500] }}</div>
+                    <div class="text-md">Language: {{ result.language or 'Unknown' }} | Stars: {{ result.stargazers_count }}</div>
+                </div>
+            {% endfor %}
+    </main>
+</body>
+</html>

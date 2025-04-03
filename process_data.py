@@ -16,6 +16,7 @@ index = pc.Index(host=pinecone_host)
 openai_client = OpenAI(api_key=openai_api_key)
 
 def embed_text(text):
+    text = text.replace('\x00', '').replace('\r', ' ').replace('\n', ' ')
     try:
         response = openai_client.embeddings.create(
             input=text,

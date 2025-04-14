@@ -23,7 +23,7 @@ def embed_text(text: str) -> list[float]:
         raise Exception("Something went wrong")
 
 
-def parallel_upsert(repositories: list[Repository]) -> None:
+async def parallel_upsert(repositories: list[Repository]) -> None:
     try:
         pinecone_records = []
         for repository in repositories:

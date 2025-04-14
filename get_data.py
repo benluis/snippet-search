@@ -17,7 +17,7 @@ pc = Pinecone(api_key=setting.pinecone_api_key, pool_threads=30)
 index = pc.Index(host=setting.pinecone_host)
 
 
-def extract_keywords(nl_query: str) -> SearchParams:
+async def extract_keywords(nl_query: str) -> SearchParams:
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -64,7 +64,9 @@ def extract_keywords(nl_query: str) -> SearchParams:
         raise Exception("Something went wrong")
 
 
-def search_github(search_params: SearchParams, limit: int = 10) -> list[Repository]:
+async def search_github(
+    search_params: SearchParams, limit: int = 10
+) -> list[Repository]:
     base_url: str = "https://api.github.com/search/repositories"
     headers: dict[str, str] = {
         "Accept": "application/vnd.github.v3+json",
@@ -104,7 +106,7 @@ def search_github(search_params: SearchParams, limit: int = 10) -> list[Reposito
         raise Exception("Something went wrong")
 
 
-def search_pinecone(query_text: str, top_k: int = 3) -> QueryResponse:
+async def search_pinecone(query_text: str, top_k: int = 3) -> QueryResponse:
     try:
         query_vector: list[float] = embed_text(query_text)
         if query_vector is None:

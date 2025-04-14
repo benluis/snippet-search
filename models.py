@@ -1,6 +1,7 @@
 # external
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class Setting(BaseSettings):
@@ -28,4 +29,4 @@ class VectorRecord(BaseModel):
 
 class SearchParams(BaseModel):
     keywords: list[str]
-    languages: list[str]
+    languages: Optional[list[str]]

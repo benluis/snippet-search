@@ -1,28 +1,18 @@
-# process_data.py
-
-# built-in
-import os
-import itertools
-from typing import List, Dict, Any, Tuple, Iterable, TypeVar, Iterator
-
 # external
-from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
 
-load_dotenv()
-github_token = os.getenv("GITHUB_TOKEN")
-openai_api_key = os.getenv("OPENAI_API_KEY")
-pinecone_api_key = os.getenv("PINECONE_API_KEY")
-pinecone_host = os.getenv("PINECONE_HOST")
+# internal
+from models import Setting, Repository
 
-T = TypeVar("T")
+setting = Setting()
+pc = Pinecone(api_key=setting.pinecone_api_key, pool_threads=30)
+index = pc.Index(host=setting.pinecone_host)
+openai_client = OpenAI(api_key=setting.openai_api_key)
 
 
-def embed_text(text: str) -> List[float]:
+def embed_text(text: str) -> list[float]:
     text = text.replace("\n", " ")
-    openai_client = OpenAI(api_key=openai_api_key)
-
     try:
         response = openai_client.embeddings.create(
             input=text, model="text-embedding-3-small"
@@ -30,59 +20,28 @@ def embed_text(text: str) -> List[float]:
         return response.data[0].embedding
     except Exception as e:
         print(f"Error embedding text: {e}")
-        return [0] * 1536
+        raise Exception("Something went wrong")
 
 
-def create_records(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    records: List[Dict[str, Any]] = []
-    for item in data:
-        description: str = (
-            item.get("description")
-            or item.get("full_name")
-            or f"Repository {item['id']}"
-        )
-
-        embedding: List[float] = embed_text(description[:200])
-
-        if embedding is not None:
-            record: Dict[str, Any] = {
-                "id": str(item["id"]),
-                "values": embedding,
-                "metadata": {
-                    "description": description[:200],
-                    "language": item.get("language", "unknown"),
-                    "url": item["html_url"],
-                    "stars": item.get("stargazers_count", 0),
-                    "full_name": item.get("full_name", ""),
-                },
-            }
-            records.append(record)
-    return records
-
-
-def chunks(iterable: Iterable[T], batch_size: int = 200) -> Iterator[Tuple[T, ...]]:
-    """A helper function to break an iterable into chunks of size batch_size."""
-    it = iter(iterable)
-    chunk = tuple(itertools.islice(it, batch_size))
-    while chunk:
-        yield chunk
-        chunk = tuple(itertools.islice(it, batch_size))
-
-
-def parallel_upsert(
-    records: List[Dict[str, Any]], batch_size: int = 200, max_parallel: int = 30
-) -> int:
+def parallel_upsert(repositories: list[Repository]) -> None:
     try:
-        pc_parallel = Pinecone(api_key=pinecone_api_key, pool_threads=max_parallel)
-        index_parallel = pc_parallel.Index(host=pinecone_host)
-
-        total_upserted: int = 0
-        for batch in chunks(records, batch_size=batch_size):
-            response = index_parallel.upsert(vectors=batch)
-            total_upserted += response.upserted_count
-
-        return total_upserted
-
+        pinecone_records = []
+        for repository in repositories:
+            vector = embed_text(repository.description)
+            pinecone_records.append(
+                {
+                    "id": repository.id,
+                    "values": vector,
+                    "metadata": {
+                        "full_name": repository.full_name,
+                        "description": repository.description,
+                        "language": repository.language,
+                        "stargazers_count": repository.stargazers_count,
+                    },
+                }
+            )
+        index.upsert(vectors=pinecone_records)
+        return None
     except Exception as e:
         print(f"Error in parallel upsert: {e}")
-        return 0
+        raise Exception("Something went wrong")

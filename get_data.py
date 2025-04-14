@@ -1,54 +1,82 @@
-# get_data.py
-
 # built-in
-import os
 import json
-from typing import Dict, List, Any, Optional
+import requests
 
 # external
-import requests
-from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone, QueryResponse
 
 # internal
 from process_data import embed_text
-
-load_dotenv()
-github_token = os.getenv("GITHUB_TOKEN")
-openai_api_key = os.getenv("OPENAI_API_KEY")
-pinecone_api_key = os.getenv("PINECONE_API_KEY")
-pinecone_host = os.getenv("PINECONE_HOST")
+from models import SearchParams, Repository, Setting
 
 
-def extract_keywords(nl_query: str) -> Dict[str, Any]:
-    openai_client = OpenAI(api_key=openai_api_key)
+setting = Setting()
+openai_client = OpenAI(api_key=setting.openai_api_key)
+pc = Pinecone(api_key=setting.pinecone_api_key, pool_threads=30)
+index = pc.Index(host=setting.pinecone_host)
+
+
+def extract_keywords(nl_query: str) -> SearchParams:
     try:
         response = openai_client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": "Extract search parameters from this query about code. Return a JSON with 'keywords' (main functionality) and 'languages' (programming languages mentioned).",
+                    "content": "Extract search parameters from this query about code. Return a JSON with 'keywords' and 'languages'.",
                 },
                 {"role": "user", "content": nl_query},
             ],
-            response_format={"type": "json_object"},
-            max_tokens=200,
+            tools=[
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "extract_params",
+                        "description": "Extract search parameters",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "keywords": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "languages": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                            },
+                            "required": ["keywords", "languages"],
+                        },
+                    },
+                }
+            ],
+            tool_choice={"type": "function", "function": {"name": "extract_params"}},
         )
-        return json.loads(response.choices[0].message.content)
+
+        tool_call = response.choices[0].message.tool_calls[0]
+        args = json.loads(tool_call.function.arguments)
+        keywords = args.get("keywords")
+        languages = args.get("languages", [])
+        return SearchParams(keywords=keywords, languages=languages)
     except Exception as e:
         print(f"Error extracting search parameters: {e}")
-        return {"keywords": nl_query, "languages": None}
+        raise Exception("Something went wrong")
 
 
-def search_github(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+def search_github(search_params: SearchParams, limit: int = 10) -> list[Repository]:
     base_url: str = "https://api.github.com/search/repositories"
-    headers: Dict[str, str] = {"Accept": "application/vnd.github.v3+json"}
-    if github_token:
-        headers["Authorization"] = f"token {github_token}"
+    headers: dict[str, str] = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {setting.github_token}",
+    }
 
-    params: Dict[str, Any] = {
+    query = " ".join(search_params.keywords)
+    if search_params.languages:
+        for lang in search_params.languages:
+            query += f" language:{lang}"
+
+    params: dict[str, str | int] = {
         "q": query,
         "sort": "stars",
         "order": "desc",
@@ -57,20 +85,31 @@ def search_github(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 
     response = requests.get(base_url, headers=headers, params=params)
     if response.status_code == 200:
-        return response.json().get("items", [])
+        repo_data = response.json().get("items", [])
+        repos: list[Repository] = []
+        for repo in repo_data:
+            repos.append(
+                Repository(
+                    id=str(repo["id"]),
+                    full_name=repo["full_name"],
+                    html_url=repo["html_url"],
+                    description=repo.get("description", ""),
+                    language=repo.get("language", "unknown"),
+                    stargazers_count=repo.get("stargazers_count", 0),
+                )
+            )
+        return repos
     else:
         print(f"Error fetching GitHub repositories: {response.status_code}")
-        return []
+        raise Exception("Something went wrong")
 
 
 def search_pinecone(query_text: str, top_k: int = 3) -> QueryResponse:
-    pc = Pinecone(api_key=pinecone_api_key)
-    index = pc.Index(host=pinecone_host)
     try:
-        query_vector: List[float] = embed_text(query_text)
+        query_vector: list[float] = embed_text(query_text)
         if query_vector is None:
             print("Failed to generate query embedding.")
-            return None
+            raise Exception("Something went wrong")
 
         results: QueryResponse = index.query(
             vector=query_vector, top_k=top_k, namespace="", include_metadata=True
@@ -78,4 +117,4 @@ def search_pinecone(query_text: str, top_k: int = 3) -> QueryResponse:
         return results
     except Exception as e:
         print(f"Error searching Pinecone: {e}")
-        return QueryResponse(matches=[], namespace="")
+        raise Exception("Something went wrong")

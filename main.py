@@ -3,11 +3,11 @@ from fastapi import FastAPI, Request, Query, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import asyncio
+from pinecone import QueryResponse
 import uvicorn
 
 # internal
-from models import SearchParams
+from models import SearchParams, Repository
 import clients
 from utils import (
     extract_keywords,
@@ -40,11 +40,9 @@ async def search(request: Request, q: str = Query("")):
     try:
         search_params: SearchParams = await extract_keywords(q)
 
-        github_results, pinecone_results = await asyncio.gather(
-            search_github(search_params, limit=10), search_pinecone(q, top_k=5)
-        )
-
+        github_results: list[Repository] = await search_github(search_params, limit=10)
         await parallel_upsert(github_results)
+        pinecone_results: QueryResponse = await search_pinecone(q, top_k=5)
 
         return templates.TemplateResponse(
             "results.html",

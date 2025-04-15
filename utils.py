@@ -118,8 +118,8 @@ async def search_github(
                     id=str(repo["id"]),
                     full_name=repo["full_name"],
                     html_url=repo["html_url"],
-                    description=repo.get("description") or "",
-                    language=repo.get("language") or "",
+                    description=repo.get("description") or repo["full_name"],
+                    language=repo.get("language") or "Unknown",
                     stargazers_count=repo.get("stargazers_count", 0),
                 )
             )
@@ -170,7 +170,7 @@ async def parallel_upsert(repositories: list[Repository]) -> None:
                         "full_name": repo.full_name,
                         "url": repo.html_url,
                         "description": repo.description,
-                        "language": repo.language or "",
+                        "language": repo.language,
                         "stars": repo.stargazers_count,
                     },
                 }

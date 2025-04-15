@@ -7,26 +7,26 @@
 </head>
 <body class="font-sans bg-gray-50">
     <header class="border-b bg-white p-3">
-    <div class="max-w-4xl mx-auto flex items-center">
-        <a href="/" class="mr-4 font-bold text-2xl">
-            <span class="text-blue-500">C</span>
-            <span class="text-red-500">o</span>
-            <span class="text-yellow-500">d</span>
-            <span class="text-blue-500">e</span>
-            <span class="text-green-500">S</span>
-            <span class="text-red-500">e</span>
-            <span class="text-blue-500">a</span>
-            <span class="text-yellow-500">r</span>
-            <span class="text-green-500">c</span>
-            <span class="text-red-500">h</span>
-        </a>
-        <div class="flex-grow">
-            <form action="/search" method="get" class="flex w-full border rounded-full overflow-hidden hover:shadow-md focus-within:shadow-md">
-                <input type="text" name="q" value="{{ query }}" class="flex-1 w-full px-4 py-3 outline-none">
-            </form>
+        <div class="max-w-4xl mx-auto flex items-center">
+            <a href="/" class="mr-4 font-bold text-2xl">
+                <span class="text-blue-500">C</span>
+                <span class="text-red-500">o</span>
+                <span class="text-yellow-500">d</span>
+                <span class="text-blue-500">e</span>
+                <span class="text-green-500">S</span>
+                <span class="text-red-500">e</span>
+                <span class="text-blue-500">a</span>
+                <span class="text-yellow-500">r</span>
+                <span class="text-green-500">c</span>
+                <span class="text-red-500">h</span>
+            </a>
+            <div class="flex-1">
+                <form action="/search" method="get" class="flex w-full border rounded-full overflow-hidden hover:shadow-md focus-within:shadow-md">
+                    <input type="text" name="q" placeholder="Search for code..." class="flex-1 w-full px-4 py-3 outline-none">
+                </form>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
     <main class="max-w-3xl mx-auto p-4">
         <h2 class="text-lg border-b pb-1 mb-4">Vector Database Results</h2>
@@ -35,7 +35,7 @@
                 <a href="{{ result.metadata.url }}" class="text-blue-700 hover:underline">{{ result.metadata.full_name }}</a>
                 <div class="text-sm text-green-700">{{ result.metadata.url }}</div>
                 <div class="text-sm">{{ result.metadata.description[:500] }}</div>
-                <div class="text-md">Language: {{ result.metadata.language }} | Stars: {{ result.metadata.stars }}</div>
+                <div class="text-md">Language: {{ result.metadata.language }} | Stars: {{ result.metadata.stars|int }}</div>
             </div>
         {% endfor %}
 

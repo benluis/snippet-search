@@ -2,6 +2,7 @@
 import httpx
 from openai import AsyncOpenAI
 from pinecone import PineconeAsyncio
+from supabase import create_client
 
 # internal
 from models import Setting
@@ -11,10 +12,11 @@ openai_client = None
 pinecone_index = None
 http_client = None
 github_token = None
+supabase_client = None
 
 
 async def setup_clients():
-    global openai_client, pinecone_index, http_client, github_token
+    global openai_client, pinecone_index, http_client, github_token, supabase_client
 
     settings = Setting()
 
@@ -31,6 +33,8 @@ async def setup_clients():
     pinecone_index = pc_async.IndexAsyncio(host=settings.pinecone_host)
 
     github_token = settings.github_token
+
+    supabase_client = create_client(settings.supabase_url, settings.supabase_key)
 
 
 async def close_clients():

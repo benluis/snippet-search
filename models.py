@@ -10,6 +10,8 @@ class Setting(BaseSettings):
     openai_api_key: str
     pinecone_api_key: str
     pinecone_host: str
+    supabase_url: str
+    supabase_key: str
 
 
 class Repository(BaseModel):

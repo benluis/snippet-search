@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Code Converter - CodeSearch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+</head>
+<body class="font-sans bg-gray-50">
+    <header class="border-b border-gray-200 bg-white py-3">
+        <div class="mx-auto flex max-w-4xl items-center">
+            <a href="/" class="mr-4 text-2xl font-bold">
+                <img src="/static/favicon.svg" alt="CodeSearch" width="64" height="64">
+            </a>
+            <div class="flex-1">
+                <form action="/search" method="get" class="flex">
+                    <input type="text" name="q" placeholder="Search for code..."
+                           class="w-full rounded-full border border-gray-200 py-3 px-4 outline-none hover:shadow-md focus:shadow-md">
+                </form>
+            </div>
+            <div class="mx-4">
+                {% if auth and auth.authenticated %}
+                    <div id="user-info">
+                        <div>
+                            <span class="mr-2">Welcome, {{ auth.user.name }}</span>
+                        </div>
+                        <div class="flex justify-end">
+                            <a href="/favorites" class="mx-2 text-sm text-blue-500 hover:text-blue-700">Favorites</a>
+                            <a href="/repo-convert" class="mx-2 text-sm text-blue-500 hover:text-blue-700">Code Convert</a>
+                            <a href="/auth/signout" id="sign-out" class="mx-2 text-sm text-red-500 hover:text-red-800">Sign out</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="/auth/signin" id="google-login" class="flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-800 hover:bg-gray-100">
+                        Sign in with Google
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    <main class="max-w-4xl mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Code Converter</h2>
+
+        <div id="repo-input" class="mb-8">
+            <div class="mb-4">
+                <label for="repo-url" class="block text-sm font-medium text-gray-700 mb-1">GitHub Repository URL</label>
+                <div class="flex">
+                    <input id="repo-url" type="text" placeholder="https://github.com/username/repository"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <p class="text-sm text-gray-500 mt-1">Press Enter to explore repository</p>
+            </div>
+        </div>
+
+        <div id="repo-explorer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="col-span-1 border border-gray-200 rounded-md p-4 bg-white">
+                <h3 class="font-medium mb-2">Repository Files</h3>
+                <div id="file-list" class="max-h-96 overflow-y-auto">
+                </div>
+            </div>
+
+            <div class="col-span-2">
+                <div class="mb-4">
+                    <label for="target-language" class="block text-sm font-medium text-gray-700 mb-1">Target Language</label>
+                    <select id="target-language" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="java">Java</option>
+                        <option value="c">C</option>
+                        <option value="c++">C++</option>
+                        <option value="c#">C#</option>
+                        <option value="go">Go</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="php">PHP</option>
+                        <option value="swift">Swift</option>
+                        <option value="rust">Rust</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="source-code" class="block text-sm font-medium text-gray-700">Source Code</label>
+                        <span id="source-language-display" class="text-sm text-gray-600"></span>
+                    </div>
+                    <textarea id="source-code" class="w-full h-60 border border-gray-300 rounded-md p-2 font-mono text-sm resize-y" readonly></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <button id="convert-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-md hidden mb-2">
+                        Convert
+                    </button>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="converted-code" class="block text-sm font-medium text-gray-700">Converted Code</label>
+                        <span id="target-language-display" class="text-sm text-gray-600"></span>
+                    </div>
+                    <textarea id="converted-code" class="w-full h-60 border border-gray-300 rounded-md p-2 font-mono text-sm resize-y" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-4 rounded-md shadow-lg">
+                <p class="text-lg font-medium">Loading...</p>
+            </div>
+        </div>
+    </main>
+    <script src="/static/js/repo_convert.js"></script>
+</body>
+</html>

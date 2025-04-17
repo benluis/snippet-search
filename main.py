@@ -11,7 +11,12 @@ import clients
 from search import handle_search
 from auth import signin, handle_callback, signout, get_user_info
 from favorites import add_favorite, remove_favorite, get_favorites
-from models import AuthResponse, Repository, SearchResult
+from models import AuthResponse, SearchResult
+from converter import (
+    handle_repo_exploration,
+    handle_file_fetch,
+    handle_repo_conversion,
+)
 
 
 @asynccontextmanager
@@ -48,25 +53,28 @@ async def auth_get_user(request: Request) -> AuthResponse:
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request) -> HTMLResponse:
-    auth_response = await get_user_info(request)
+    auth_response: AuthResponse = await get_user_info(request)
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "auth": auth_response},
+        "index.html", {"request": request, "auth": auth_response}
     )
 
 
 @app.get("/search", response_class=HTMLResponse)
 async def search(request: Request, q: str = Query("")) -> HTMLResponse:
-    content: SearchResult = await handle_search(request, q)
-    auth_response = await get_user_info(request)
+    if not q or q.strip() == "":
+        return templates.TemplateResponse("index.html", {"request": request})
+
+    auth_response: AuthResponse = await get_user_info(request)
+    results: SearchResult = await handle_search(request, q)
+
     return templates.TemplateResponse(
         "results.html",
         {
             "request": request,
             "query": q,
-            "pinecone_results": content.get("pinecone_results", []),
-            "github_results": content.get("github_results", []),
             "auth": auth_response,
+            "pinecone_results": results.get("pinecone_results", []),
+            "github_results": results.get("github_results", []),
         },
     )
 
@@ -84,16 +92,37 @@ async def favorites_remove(request: Request, repo_id: str) -> dict[str, bool]:
 @app.get("/favorites")
 async def favorites_get(request: Request):
     repositories = await get_favorites(request)
-
-    accept_header = request.headers.get("accept", "")
-    if "application/json" in accept_header:
+    if isinstance(repositories, RedirectResponse):
         return repositories
-    else:
-        auth_response = await get_user_info(request)
-        return templates.TemplateResponse(
-            "favorites.html",
-            {"request": request, "favorites": repositories, "auth": auth_response},
-        )
+
+    auth_response: AuthResponse = await get_user_info(request)
+    return templates.TemplateResponse(
+        "favorites.html",
+        {"request": request, "favorites": repositories, "auth": auth_response},
+    )
+
+
+@app.get("/repo-convert", response_class=HTMLResponse)
+async def repo_convert_page(request: Request) -> HTMLResponse:
+    auth_response = await get_user_info(request)
+    return templates.TemplateResponse(
+        "repo_convert.html", {"request": request, "auth": auth_response}
+    )
+
+
+@app.post("/repo-convert/explore")
+async def repo_explore(request: Request) -> dict:
+    return await handle_repo_exploration(request)
+
+
+@app.post("/repo-convert/fetch-file")
+async def fetch_file(request: Request) -> dict:
+    return await handle_file_fetch(request)
+
+
+@app.post("/repo-convert/convert")
+async def repo_convert(request: Request) -> dict:
+    return await handle_repo_conversion(request)
 
 
 if __name__ == "__main__":

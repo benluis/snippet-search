@@ -4,10 +4,28 @@ import asyncio
 
 # external
 import httpx
+from fastapi import HTTPException, Request
+from pinecone import QueryResponse
 
 # internal
-from models import SearchParams, Repository
+from models import SearchParams, Repository, SearchResult
 import clients
+
+
+async def handle_search(request: Request, q: str = "") -> SearchResult:
+    try:
+        search_params: SearchParams = await extract_keywords(q)
+
+        github_results: list[Repository] = await search_github(search_params, limit=10)
+        await parallel_upsert(github_results)
+        pinecone_results: QueryResponse = await search_pinecone(q, top_k=5)
+        results: SearchResult = SearchResult(
+            pinecone_results=pinecone_results.matches,
+            github_results=github_results,
+        )
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 async def embed_text(text: str) -> list[float]:

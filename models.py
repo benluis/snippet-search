@@ -1,6 +1,6 @@
 # external
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 
 
@@ -23,12 +23,27 @@ class Repository(BaseModel):
     stargazers_count: int
 
 
-class VectorRecord(BaseModel):
-    id: str
-    values: list[float]
-    metadata: dict = Field(default_factory=dict)
-
-
 class SearchParams(BaseModel):
     keywords: list[str]
-    languages: Optional[list[str]]
+    languages: list[str] = []
+
+
+class SearchResult(dict):
+    pinecone_results: list[dict]
+    github_results: list[Repository]
+
+
+class PKCEPair(BaseModel):
+    code_verifier: str
+    code_challenge: str
+
+
+class UserInfo(BaseModel):
+    id: str
+    email: str
+    name: str
+
+
+class AuthResponse(BaseModel):
+    authenticated: bool
+    user: Optional[UserInfo] = None

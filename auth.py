@@ -47,10 +47,10 @@ async def signin(request: Request) -> RedirectResponse:
 
         response: RedirectResponse = RedirectResponse(url=auth_url)
         response.set_cookie(
-            "code_verifier", pkce_pair.code_verifier, httponly=True, secure=False
+            "code_verifier", pkce_pair.code_verifier, httponly=True, secure=True
         )
 
-        response.set_cookie("auth_redirect", referer, httponly=True, secure=False)
+        response.set_cookie("auth_redirect", referer, httponly=True, secure=True)
         return response
     except Exception as e:
         raise HTTPException(
@@ -80,7 +80,7 @@ async def handle_callback(request: Request, code: str = Query(...)) -> RedirectR
             "access_token",
             session.access_token,
             httponly=True,
-            secure=False,
+            secure=True,
             max_age=86400,
             samesite="none",
         )
@@ -88,7 +88,7 @@ async def handle_callback(request: Request, code: str = Query(...)) -> RedirectR
             "refresh_token",
             session.refresh_token,
             httponly=True,
-            secure=False,
+            secure=True,
             max_age=86400,
             samesite="none",
         )

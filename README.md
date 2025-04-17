@@ -5,11 +5,11 @@ A code snippet search engine that uses vector embeddings to find relevant reposi
 ## Live Demo
 
 The application is deployed and accessible at:
-- http://104.248.114.24
+- https://tolatex.online
 
 ## Technology Stack
 
-- **Backend**: Flask (Python)
-- **APIs**: GitHub, OpenAI, Pinecone
+- **Backend**: FastAPI (Python)
+- **APIs**: GitHub, OpenAI, Pinecone, Supabase
 - **Frontend**: HTML/CSS with TailwindCSS
 - **Deployment**: DigitalOcean Droplet, Nginx, Gunicorn

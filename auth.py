@@ -82,7 +82,8 @@ async def handle_callback(request: Request, code: str = Query(...)) -> RedirectR
             httponly=True,
             secure=True,
             max_age=86400,
-            samesite="none",
+            samesite="lax",
+            path="/",
         )
         response.set_cookie(
             "refresh_token",
@@ -90,7 +91,8 @@ async def handle_callback(request: Request, code: str = Query(...)) -> RedirectR
             httponly=True,
             secure=True,
             max_age=86400,
-            samesite="none",
+            samesite="lax",
+            path="/",
         )
 
         response.delete_cookie(key="auth_redirect")

@@ -92,14 +92,19 @@ async def favorites_remove(request: Request, repo_id: str) -> dict[str, bool]:
 @app.get("/favorites")
 async def favorites_get(request: Request):
     repositories = await get_favorites(request)
-    if isinstance(repositories, RedirectResponse):
-        return repositories
-
     auth_response: AuthResponse = await get_user_info(request)
     return templates.TemplateResponse(
         "favorites.html",
         {"request": request, "favorites": repositories, "auth": auth_response},
     )
+
+
+@app.get("/api/favorites")
+async def favorites_get_json(request: Request):
+    repositories = await get_favorites(request)
+    if isinstance(repositories, RedirectResponse):
+        return RedirectResponse(url="/")
+    return repositories
 
 
 @app.get("/repo-convert", response_class=HTMLResponse)

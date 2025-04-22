@@ -40,7 +40,7 @@ async function markExistingFavorites() {
     const authData = await authResponse.json();
     if (!authData.authenticated) return;
 
-    const response = await fetch('/favorites');
+    const response = await fetch('/api/favorites');
     if (!response.ok) return;
 
     const favorites = await response.json();

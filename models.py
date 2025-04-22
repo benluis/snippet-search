@@ -46,4 +46,4 @@ class UserInfo(BaseModel):
 
 class AuthResponse(BaseModel):
     authenticated: bool
-    user: Optional[UserInfo] = None
+    user: UserInfo
